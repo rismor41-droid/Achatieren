@@ -1,0 +1,707 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Sparkles,
+  Search,
+  Sliders,
+  Bookmark,
+  ChevronRight,
+  Layers,
+  Scissors,
+  X,
+  Eye,
+  Camera,
+  Upload,
+  Plus,
+  Trash2,
+  Image as ImageIcon,
+  HelpCircle,
+  Send,
+  UserCheck,
+  Compass,
+  MessageSquare
+} from 'lucide-react';
+
+// Datensatz für Achatsorten mit detaillierten Roh- und Schliffmerkmalen
+const AGATE_DATA = [
+  {
+    id: 'festungsachat',
+    name: 'Festungsachat (Fortification Agate)',
+    category: 'Bänder-Achat',
+    hardness: '6.5 - 7',
+    translucency: 'Kanten leicht lichtdurchlässig',
+    location: 'Idar-Oberstein (DE), Brasilien, Uruguay',
+    rawFeatures: [
+      'Außen raue, knollige oder eiförmige Form (Verwitterungskruste).',
+      'Farbe außen oft grau, braun oder rötlich-rostig.',
+      'Beim Anbrechen sieht man bereits feine, helle Parallellinien.'
+    ],
+    polishedFeatures: [
+      'Zackiges, eckiges Banding, das an historische Festungsanlagen/Grundrisse erinnert.',
+      'Scharf abgegrenzte Farbzonen (Weiß, Grau, Rot, Braun).',
+      'Häufig mit Quarzkristall-Kern im Zentrum.'
+    ],
+    sawingTip: 'Quer zur Bänderung bzw. senkrecht zur Längsachse der Knolle sägen, um den vollen Festungseffekt freizulegen.',
+    rawImage: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%2327272a"/><path d="M70 160 Q120 70 240 80 T340 180 Q290 260 180 250 T70 160 Z" fill="%2352525b" stroke="%233f3f46" stroke-width="8"/><path d="M120 160 Q150 110 220 115 T290 180 T190 210 Z" fill="%233f3f46"/><circle cx="210" cy="160" r="25" fill="%2327272a"/></svg>',
+    polishedImage: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%2309090b"/><path d="M80 150 L140 80 L260 70 L330 140 L310 230 L160 250 Z" fill="%2378350f" stroke="%23fef3c7" stroke-width="6"/><path d="M110 150 L155 100 L245 90 L295 140 L280 210 L170 225 Z" fill="%23b45309" stroke="%23ffffff" stroke-width="4"/><path d="M140 150 L170 120 L230 110 L260 145 L250 190 L180 200 Z" fill="%23d97706" stroke="%23fef3c7" stroke-width="4"/><polygon points="190,140 220,135 235,155 215,175 185,165" fill="%23fef3c7"/></svg>'
+  },
+  {
+    id: 'moosachat',
+    name: 'Moosachat (Moss Agate)',
+    category: 'Einschluss-Achat',
+    hardness: '6.5 - 7',
+    translucency: 'Hoch (milchig-weiß bis transparent)',
+    location: 'Indien, USA, Kasachstan',
+    rawFeatures: [
+      'Oft grüne, fleckige oder moosartige Äderchen an der Oberfläche sichtbar.',
+      'Keine Bänderung! Transparenter Quarzgrund mit dunklen Einschlüssen.',
+      'Wirkt im Rohzustand oft wie ein verkrusteter Kiesel mit grünem Schimmer.'
+    ],
+    polishedFeatures: [
+      'Traumhafte, farn- oder moosartige grüne/schwarze Hornblende-Dendriten.',
+      'Gute Lichtdurchlässigkeit hebt die 3D-Wirkung der Einschlüsse hervor.'
+    ],
+    sawingTip: 'Flach parallel zu den schönsten Einschlussfeldern schneiden. Hohe Lichtdurchlässigkeit ausnutzen!',
+    rawImage: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%2318181b"/><path d="M80 140 Q130 50 260 60 T350 170 Q300 270 150 240 Z" fill="%233f3f46"/><circle cx="150" cy="130" r="30" fill="%23065f46" opacity="0.6"/><circle cx="240" cy="180" r="40" fill="%23047857" opacity="0.5"/></svg>',
+    polishedImage: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%23022c22"/><path d="M60 150 Q120 50 260 60 T350 160 Q300 260 140 250 Z" fill="%23ecfdf5" opacity="0.95"/><path d="M120 150 Q140 100 180 140 T240 120 T280 180" fill="none" stroke="%23047857" stroke-width="8" stroke-linecap="round"/><path d="M160 180 Q200 220 250 190 T290 140" fill="none" stroke="%23064e3b" stroke-width="6" stroke-linecap="round"/><circle cx="200" cy="130" r="8" fill="%23047857"/></svg>'
+  },
+  {
+    id: 'feuerachat',
+    name: 'Feuerachat (Fire Agate)',
+    category: 'Sonderform',
+    hardness: '7',
+    translucency: 'Schichtenweise transparent',
+    location: 'Mexiko, Arizona (USA)',
+    rawFeatures: [
+      'Braune, traubenartige (botryoidale) Oberflächenknubbel.',
+      'Im Sonnenlicht schimmert es unter der braunen Schicht feurig.'
+    ],
+    polishedFeatures: [
+      'Irrisierendes Farbenspiel (Rot, Gold, Grün) durch Eisenoxidschichten.',
+      'Wird gewölbt freigelegt und als Cabochon poliert.'
+    ],
+    sawingTip: 'Nicht flach sägen! Die braune Deckschicht mit Dremel/Schleifstift freilegen.',
+    rawImage: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%231c1917"/><circle cx="150" cy="140" r="50" fill="%23451a03"/><circle cx="210" cy="130" r="40" fill="%237c2d12"/><circle cx="180" cy="180" r="45" fill="%23451a03"/></svg>',
+    polishedImage: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%230c0a09"/><path d="M100 160 Q150 70 270 90 T330 200 Q260 270 140 240 Z" fill="%23451a03"/><circle cx="180" cy="150" r="40" fill="%23dc2626"/><circle cx="210" cy="160" r="25" fill="%23f59e0b"/><circle cx="190" cy="155" r="12" fill="%2310b981"/></svg>'
+  },
+  {
+    id: 'botswana',
+    name: 'Botswana-Achat',
+    category: 'Bänder-Achat',
+    hardness: '6.5 - 7',
+    translucency: 'Fein lichtdurchlässig',
+    location: 'Botswana (Afrika)',
+    rawFeatures: [
+      'Oft rollsteinartig abgerundet (Flussgeröll).',
+      'Grau-violette, zarte Haut mit extrem feinen Linien an Bruchkanten.'
+    ],
+    polishedFeatures: [
+      'Extrem dichte, hauchfeine Bänder in Pastelltönen (Rosa, Grau, Apricot).',
+      'Feine, elegante Schichtungen.'
+    ],
+    sawingTip: 'Feinsägeblatt nutzen, da die Strukturen sehr eng liegen.',
+    rawImage: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%2318181b"/><ellipse cx="200" cy="150" rx="120" ry="80" fill="%234a044e" opacity="0.4"/><ellipse cx="200" cy="150" rx="110" ry="70" fill="%233f3f46"/></svg>',
+    polishedImage: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect width="400" height="300" fill="%2309090b"/><ellipse cx="200" cy="150" rx="130" ry="85" fill="%23701a75" stroke="%23f472b6" stroke-width="3"/><ellipse cx="200" cy="150" rx="100" ry="65" fill="%234a044e" stroke="%23fbcfe8" stroke-width="3"/><ellipse cx="200" cy="150" rx="70" ry="45" fill="%23a21caf" stroke="%23ffffff" stroke-width="2"/></svg>'
+  }
+];
+
+export default function App() {
+  const [activeTab, setActiveTab] = useState('catalog');
+  const [selectedCategory, setSelectedCategory] = useState('Alle');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [favorites, setFavorites] = useState(() => {
+    const saved = localStorage.getItem('achat_favs');
+    return saved ? JSON.parse(saved) : ['festungsachat', 'moosachat'];
+  });
+
+  // Meine Funde State mit localStorage
+  const [myFounds, setMyFounds] = useState(() => {
+    const saved = localStorage.getItem('achat_myfounds');
+    return saved ? JSON.parse(saved) : [
+      {
+        id: 'found-1',
+        name: 'Steinbruch Fund #1',
+        location: 'Idar-Oberstein',
+        weight: '240g',
+        date: '12.10.2025',
+        note: 'Dunkle Verwitterungsrinde, leuchtet an der Kante grünlich durch.',
+        agateType: 'moosachat',
+        image: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="%231e293b"/><path d="M40 100 Q60 40 120 50 T160 140 Q110 180 50 150 Z" fill="%23047857" opacity="0.8"/><circle cx="100" cy="100" r="30" fill="%2310b981"/></svg>'
+      }
+    ];
+  });
+
+  // Modal / Add Form State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newFound, setNewFound] = useState({
+    name: '',
+    location: '',
+    weight: '',
+    note: '',
+    agateType: 'festungsachat',
+    image: null
+  });
+
+  // Selected Agate for Detail Modal
+  const [activeAgateModal, setActiveAgateModal] = useState(null);
+
+  // Compare Tool State
+  const [compareAgate, setCompareAgate] = useState(AGATE_DATA[0]);
+  const [sliderPos, setSliderPos] = useState(50);
+
+  // Ask Morris Form State
+  const [morrisQuery, setMorrisQuery] = useState({ name: '', email: '', question: '', image: null });
+  const [morrisSubmitted, setMorrisSubmitted] = useState(false);
+
+  // LocalStorage Persistenz
+  useEffect(() => {
+    localStorage.setItem('achat_favs', JSON.stringify(favorites));
+  }, [favorites]);
+
+  useEffect(() => {
+    localStorage.setItem('achat_myfounds', JSON.stringify(myFounds));
+  }, [myFounds]);
+
+  const toggleFavorite = (id, e) => {
+    if (e) e.stopPropagation();
+    setFavorites((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const filteredAgates = useMemo(() => {
+    return AGATE_DATA.filter((agate) => {
+      const matchesCategory = selectedCategory === 'Alle' || agate.category === selectedCategory;
+      const matchesSearch =
+        agate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        agate.location.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  }, [selectedCategory, searchTerm]);
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewFound({ ...newFound, image: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleMorrisImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMorrisQuery({ ...morrisQuery, image: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSaveFound = (e) => {
+    e.preventDefault();
+    if (!newFound.name) return;
+    const createdFound = {
+      ...newFound,
+      id: `found-${Date.now()}`,
+      date: new Date().toLocaleDateString('de-DE')
+    };
+    setMyFounds([createdFound, ...myFounds]);
+    setNewFound({ name: '', location: '', weight: '', note: '', agateType: 'festungsachat', image: null });
+    setShowAddModal(false);
+  };
+
+  const handleDeleteFound = (id, e) => {
+    e.stopPropagation();
+    setMyFounds(myFounds.filter((item) => item.id !== id));
+  };
+
+  const handleMorrisSubmit = (e) => {
+    e.preventDefault();
+    setMorrisSubmitted(true);
+    setTimeout(() => {
+      setMorrisSubmitted(false);
+      setMorrisQuery({ name: '', email: '', question: '', image: null });
+    }, 4000);
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col selection:bg-amber-500 selection:text-slate-950">
+      {/* HEADER */}
+      <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 px-4 py-3 sm:px-8 flex items-center justify-between shadow-xl">
+        <div onClick={() => setActiveTab('catalog')} className="flex items-center space-x-3 cursor-pointer group">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 via-orange-500 to-amber-300 flex items-center justify-center shadow-lg shadow-amber-900/30 group-hover:scale-105 transition-transform">
+            <Sparkles className="w-6 h-6 text-slate-950 stroke-[2.5]" />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold tracking-wide bg-gradient-to-r from-amber-200 via-orange-100 to-slate-100 bg-clip-text text-transparent">
+              Achat-Sortierhilfe
+            </h1>
+            <p className="text-[10px] text-slate-400">Bestimmung & Schliff-Analyse</p>
+          </div>
+        </div>
+
+        {/* DESKTOP NAV */}
+        <nav className="hidden md:flex items-center space-x-1 bg-slate-950/80 p-1.5 rounded-xl border border-slate-800">
+          {[
+            { id: 'catalog', label: 'Katalog', icon: Layers },
+            { id: 'compare', label: 'Vergleich', icon: Sliders },
+            { id: 'myfounds', label: `Meine Funde (${myFounds.length})`, icon: Camera },
+            { id: 'morris', label: 'Fragen Sie Morris', icon: HelpCircle },
+            { id: 'favorites', label: `Favoriten (${favorites.length})`, icon: Bookmark }
+          ].map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-amber-500 text-slate-950 shadow-md font-bold'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </nav>
+      </header>
+
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+        {/* TAB 1: KATALOG */}
+        {activeTab === 'catalog' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-slate-900/60 border border-slate-800/80 p-4 rounded-3xl">
+              <div className="relative flex-1">
+                <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Achat suchen (z.B. Festungsachat, Idar-Oberstein)..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors"
+                />
+              </div>
+              <div className="flex items-center space-x-2 overflow-x-auto pb-1 sm:pb-0">
+                {['Alle', 'Bänder-Achat', 'Einschluss-Achat', 'Sonderform'].map((cat) => (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                      selectedCategory === cat
+                        ? 'bg-amber-500 text-slate-950 font-bold shadow-md'
+                        : 'bg-slate-900 border border-slate-800 text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredAgates.map((agate) => {
+                const isFav = favorites.includes(agate.id);
+                return (
+                  <div
+                    key={agate.id}
+                    className="bg-slate-900 border border-slate-800 rounded-3xl p-5 flex flex-col justify-between shadow-xl relative group hover:border-amber-500/40 transition-all"
+                  >
+                    <div className="space-y-4">
+                      <div className="relative w-full h-44 rounded-2xl overflow-hidden border border-slate-800 bg-slate-950">
+                        <img src={agate.polishedImage} alt={agate.name} className="w-full h-full object-cover" />
+                        <button
+                          onClick={(e) => toggleFavorite(agate.id, e)}
+                          className="absolute top-3 right-3 p-2 rounded-xl bg-slate-950/80 border border-slate-800 text-slate-300 hover:text-amber-400 transition-all"
+                        >
+                          <Bookmark className={`w-4 h-4 ${isFav ? 'fill-amber-400 text-amber-400' : ''}`} />
+                        </button>
+                      </div>
+
+                      <div>
+                        <span className="text-[10px] uppercase tracking-wider font-bold text-amber-400 bg-amber-950/40 px-2.5 py-1 rounded-lg border border-amber-800/40">
+                          {agate.category}
+                        </span>
+                        <h3 className="text-base font-bold text-slate-100 mt-2">{agate.name}</h3>
+                        <p className="text-xs text-slate-400 mt-1">📍 {agate.location}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 pt-4 border-t border-slate-800/80 flex items-center justify-between gap-2">
+                      <button
+                        onClick={() => setActiveAgateModal(agate)}
+                        className="flex-1 py-2 bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-200 font-bold text-xs rounded-xl transition-all flex items-center justify-center space-x-1"
+                      >
+                        <Eye className="w-4 h-4" />
+                        <span>Details & Schliff</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setCompareAgate(agate);
+                          setActiveTab('compare');
+                        }}
+                        className="p-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 rounded-xl text-slate-300 hover:text-amber-400 transition-all"
+                        title="Vergleichen"
+                      >
+                        <Sliders className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: VERGLEICHS-TOOL */}
+        {activeTab === 'compare' && compareAgate && (
+          <div className="space-y-6">
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold text-slate-100">Roh vs. Geschliffen: {compareAgate.name}</h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Bewege den Slider, um den Rohstein mit der polierten Achat-Scheibe abzugleichen.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
+              <div className="relative w-full h-80 sm:h-96 rounded-2xl overflow-hidden border border-slate-800 bg-slate-950 select-none">
+                <img src={compareAgate.polishedImage} alt="Geschliffen" className="absolute inset-0 w-full h-full object-cover" />
+                <div className="absolute top-4 right-4 bg-amber-500 text-slate-950 px-3 py-1 rounded-xl text-xs font-black shadow-lg">
+                  Geschliffen & Poliert
+                </div>
+
+                <div
+                  className="absolute inset-y-0 left-0 overflow-hidden border-r-2 border-amber-400"
+                  style={{ width: `${sliderPos}%` }}
+                >
+                  <img
+                    src={compareAgate.rawImage}
+                    alt="Rohform"
+                    className="absolute inset-0 w-full h-full object-cover max-w-none"
+                    style={{ width: '100%', height: '100%' }}
+                  />
+                  <div className="absolute top-4 left-4 bg-slate-900/90 text-amber-400 px-3 py-1 rounded-xl text-xs font-black border border-slate-800">
+                    Unbearbeitete Rohform
+                  </div>
+                </div>
+
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={sliderPos}
+                  onChange={(e) => setSliderPos(e.target.value)}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-ew-resize z-30"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-slate-950 border border-slate-800 p-5 rounded-2xl space-y-3">
+                  <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider">Erkennungsmerkmale (Rohform)</h4>
+                  <ul className="space-y-2 text-xs text-slate-300">
+                    {compareAgate.rawFeatures.map((feat, i) => (
+                      <li key={i} className="flex items-start space-x-2">
+                        <span className="text-amber-500 font-bold">•</span>
+                        <span>{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="bg-slate-950 border border-slate-800 p-5 rounded-2xl space-y-3">
+                  <h4 className="text-xs font-bold text-amber-400 uppercase tracking-wider">Erkennungsmerkmale (Schliff)</h4>
+                  <ul className="space-y-2 text-xs text-slate-300">
+                    {compareAgate.polishedFeatures.map((feat, i) => (
+                      <li key={i} className="flex items-start space-x-2">
+                        <span className="text-amber-500 font-bold">•</span>
+                        <span>{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: MEINE FUNDE */}
+        {activeTab === 'myfounds' && (
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-3xl shadow-xl">
+              <div>
+                <h2 className="text-xl font-bold text-slate-100 flex items-center space-x-2">
+                  <Camera className="w-6 h-6 text-amber-500" />
+                  <span>Meine Achat-Funde ({myFounds.length})</span>
+                </h2>
+                <p className="text-xs text-slate-400 mt-1">
+                  Fotografiere deine Steine im Rohzustand und speichere sie in deiner Sammlung.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="px-4 py-2.5 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl shadow-lg hover:bg-amber-400 transition-all flex items-center space-x-2 shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Neuen Fund hinzufügen</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {myFounds.map((found) => {
+                const matchedAgate = AGATE_DATA.find((a) => a.id === found.agateType) || AGATE_DATA[0];
+                return (
+                  <div key={found.id} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 flex flex-col justify-between shadow-xl">
+                    <div className="space-y-4">
+                      <div className="w-full h-48 bg-slate-950 rounded-2xl overflow-hidden border border-slate-800 relative flex items-center justify-center">
+                        {found.image ? (
+                          <img src={found.image} alt={found.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <ImageIcon className="w-12 h-12 text-slate-700" />
+                        )}
+                        <button
+                          onClick={(e) => handleDeleteFound(found.id, e)}
+                          className="absolute top-2 right-2 p-2 bg-slate-950/80 hover:bg-red-500 text-slate-400 hover:text-white rounded-xl transition-all border border-slate-800"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div>
+                        <h3 className="font-bold text-slate-100 text-base">{found.name}</h3>
+                        <p className="text-xs text-slate-400 mt-1">📍 {found.location || 'Unbekannt'} • ⚖️ {found.weight || 'n/a'}</p>
+                        {found.note && <p className="text-xs text-slate-300 mt-2 bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/60 italic">"{found.note}"</p>}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        setCompareAgate(matchedAgate);
+                        setActiveTab('compare');
+                      }}
+                      className="mt-4 w-full py-2.5 bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-300 font-bold text-xs rounded-xl transition-all flex items-center justify-center space-x-2"
+                    >
+                      <Sliders className="w-4 h-4" />
+                      <span>Mit Vorlage vergleichen</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: FRAGEN SIE MORRIS */}
+        {activeTab === 'morris' && (
+          <div className="space-y-6 max-w-4xl mx-auto">
+            <div className="bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-900 border border-amber-500/30 p-6 rounded-3xl shadow-xl flex flex-col md:flex-row items-center gap-6">
+              <div className="w-20 h-20 rounded-2xl bg-amber-500 flex items-center justify-center text-slate-950 shrink-0 font-black text-2xl shadow-lg shadow-amber-500/20">
+                M
+              </div>
+              <div className="space-y-1 text-center md:text-left">
+                <div className="flex items-center justify-center md:justify-start space-x-2">
+                  <h2 className="text-xl font-bold text-slate-100">Fragen Sie Morris</h2>
+                  <UserCheck className="w-5 h-5 text-amber-400" />
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Unschlüssig bei einem Rohstein? Lade ein Foto hoch und stelle Morris deine Frage zur Sorte oder zur besten Sägerichtung.
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
+              {morrisSubmitted ? (
+                <div className="py-12 text-center space-y-3">
+                  <div className="w-12 h-12 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto">
+                    <Send className="w-6 h-6" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-100">Anfrage an Morris gesendet!</h3>
+                  <p className="text-xs text-slate-400">Vielen Dank. Morris wird deinen Stein analysieren und sich zurückmelden.</p>
+                </div>
+              ) : (
+                <form onSubmit={handleMorrisSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-slate-300 block mb-1">Dein Name</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="z.B. Schmidt"
+                        value={morrisQuery.name}
+                        onChange={(e) => setMorrisQuery({ ...morrisQuery, name: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-bold text-slate-300 block mb-1">E-Mail-Adresse</label>
+                      <input
+                        type="email"
+                        required
+                        placeholder="deine@email.de"
+                        value={morrisQuery.email}
+                        onChange={(e) => setMorrisQuery({ ...morrisQuery, email: e.target.value })}
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Foto des fraglichen Steins</label>
+                    <div className="w-full h-32 bg-slate-950 border-2 border-dashed border-slate-800 hover:border-amber-500 rounded-2xl flex flex-col items-center justify-center relative cursor-pointer">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleMorrisImageUpload}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
+                      {morrisQuery.image ? (
+                        <img src={morrisQuery.image} alt="Vorschau" className="w-full h-full object-cover rounded-2xl" />
+                      ) : (
+                        <div className="flex flex-col items-center space-y-1 text-slate-500">
+                          <Upload className="w-6 h-6" />
+                          <span className="text-xs">Foto hochladen</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-slate-300 block mb-1">Deine Frage an Morris</label>
+                    <textarea
+                      rows="3"
+                      required
+                      placeholder="z.B. Ich weiß nicht, ob sich das Ansägen lohnt. An welcher Stelle sollte ich ansetzen?"
+                      value={morrisQuery.question}
+                      onChange={(e) => setMorrisQuery({ ...morrisQuery, question: e.target.value })}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+                    ></textarea>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full py-3 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl shadow-lg hover:bg-amber-400 transition-all flex items-center justify-center space-x-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    <span>Frage an Morris senden</span>
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 5: FAVORITEN */}
+        {activeTab === 'favorites' && (
+          <div className="space-y-6">
+            <h2 className="text-xl font-bold text-slate-100">Favoriten ({favorites.length})</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {AGATE_DATA.filter((a) => favorites.includes(a.id)).map((agate) => (
+                <div key={agate.id} className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
+                  <img src={agate.polishedImage} alt={agate.name} className="w-full h-40 object-cover rounded-2xl" />
+                  <h3 className="font-bold text-slate-100">{agate.name}</h3>
+                  <button onClick={() => setActiveAgateModal(agate)} className="w-full py-2 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl">
+                    Details anzeigen
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* MODAL: NEUEN FUND HOCHLADEN */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 relative">
+            <button onClick={() => setShowAddModal(false)} className="absolute top-5 right-5 p-2 rounded-full bg-slate-800 text-slate-400">
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-lg font-bold text-slate-100">Neuen Fund hinzufügen</h3>
+            <form onSubmit={handleSaveFound} className="space-y-3">
+              <div>
+                <label className="text-xs text-slate-400 block mb-1">Foto</label>
+                <input type="file" accept="image/*" onChange={handleImageUpload} className="text-xs text-slate-400" />
+              </div>
+              <input
+                type="text"
+                required
+                placeholder="Bezeichnung *"
+                value={newFound.name}
+                onChange={(e) => setNewFound({ ...newFound, name: e.target.value })}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200"
+              />
+              <input
+                type="text"
+                placeholder="Fundort"
+                value={newFound.location}
+                onChange={(e) => setNewFound({ ...newFound, location: e.target.value })}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200"
+              />
+              <div className="flex justify-end space-x-2 pt-2">
+                <button type="button" onClick={() => setShowAddModal(false)} className="px-4 py-2 text-xs text-slate-400">Abbrechen</button>
+                <button type="submit" className="px-5 py-2 bg-amber-500 text-slate-950 font-bold text-xs rounded-xl">Speichern</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: DETAIL ANSICHT */}
+      {activeAgateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-6 relative">
+            <button onClick={() => setActiveAgateModal(null)} className="absolute top-5 right-5 p-2 rounded-full bg-slate-800 text-slate-400">
+              <X className="w-5 h-5" />
+            </button>
+            <div>
+              <span className="text-[10px] font-bold text-amber-400 uppercase">{activeAgateModal.category}</span>
+              <h2 className="text-xl font-bold text-slate-100">{activeAgateModal.name}</h2>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <img src={activeAgateModal.rawImage} alt="Roh" className="w-full h-40 object-cover rounded-2xl border border-slate-800" />
+              <img src={activeAgateModal.polishedImage} alt="Geschliffen" className="w-full h-40 object-cover rounded-2xl border border-slate-800" />
+            </div>
+            <div className="bg-slate-950 p-4 rounded-2xl space-y-1 border border-slate-800">
+              <h4 className="text-xs font-bold text-amber-400 flex items-center space-x-1">
+                <Scissors className="w-4 h-4" />
+                <span>Säge-Empfehlung</span>
+              </h4>
+              <p className="text-xs text-slate-300">{activeAgateModal.sawingTip}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MOBILE BOTTOM NAV */}
+      <nav className="md:hidden sticky bottom-0 z-40 bg-slate-900 border-t border-slate-800 grid grid-cols-5 px-2 py-2 text-[9px]">
+        {[
+          { id: 'catalog', label: 'Katalog', icon: Layers },
+          { id: 'compare', label: 'Vergleich', icon: Sliders },
+          { id: 'myfounds', label: 'Funde', icon: Camera },
+          { id: 'morris', label: 'Morris', icon: HelpCircle },
+          { id: 'favorites', label: 'Favoriten', icon: Bookmark }
+        ].map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex flex-col items-center space-y-1 py-1 ${
+                activeTab === tab.id ? 'text-amber-400 font-bold' : 'text-slate-500'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+    </div>
+  );
+}
